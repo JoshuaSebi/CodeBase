@@ -1,4 +1,3 @@
-// Online C compiler to run C program online
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -232,4 +231,4 @@ void main()
 		scanf(" %c",&ch);
 	}
 	while((ch=='y')||(ch=='Y'));
-}
+} 
