@@ -1,5 +1,4 @@
 import java.util.*;
-import java.io.*;
 
 class ABC
 {
@@ -39,15 +38,16 @@ class frequency extends ABC{
 public class charFreq {
     public static void main(String[] args) {
         String str;
-        Scanner sc=new Scanner(System.in);
-        System.out.println("Enter String and char");
-        str=sc.nextLine();
-        char c=sc.nextLine().charAt(0);
-        frequency ob=new frequency(str, c);
-        int count=ob.count();
-        System.out.println("Count: "+ count);
-        ob.print(count);
-        ob=null;
+        try (Scanner sc = new Scanner(System.in)) {
+            System.out.println("Enter String and char");
+            str=sc.nextLine();
+            char c=sc.nextLine().charAt(0);
+            frequency ob=new frequency(str, c);
+            int count=ob.count();
+            System.out.println("Count: "+ count);
+            ob.print(count);
+            ob=null;
+        }
         System.gc();
         try {
             Thread.sleep(1000);

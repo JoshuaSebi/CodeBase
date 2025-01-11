@@ -5,8 +5,9 @@ public class palindrome {
     {
         String str;
         System.out.println("Enter String: ");
-        Scanner sc=new Scanner(System.in);
-        str=sc.nextLine();
+        try (Scanner sc = new Scanner(System.in)) {
+            str=sc.nextLine();
+        }
         int len=str.length();
         int i=0,j=len-1;
         int flag=0;

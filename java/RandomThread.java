@@ -61,9 +61,10 @@ class CuThread extends Thread
 public class RandomThread {
     public static void main(String[] args) {
         int t;
-        Scanner sc=new Scanner(System.in);
-        System.out.print("Enter Number: ");
-        t=sc.nextInt();
+        try (Scanner sc = new Scanner(System.in)) {
+            System.out.print("Enter Number: ");
+            t=sc.nextInt();
+        }
         RandInt rdi=new RandInt(t);
         /*create object of thread class since 
         rdi implements Runnable Interface*/

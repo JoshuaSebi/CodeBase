@@ -91,47 +91,47 @@ public class DLL {
     public static void main(String[] args) 
     {
         Doublyll dl=new Doublyll();
-        Scanner sc= new Scanner(System.in);
-        System.out.println("Enter Number of nodes: ");
-        int num=sc.nextInt();
-        char ch;
-        int item;
-        for(int i=0;i<num;i++)
-        {
-            System.out.print("Enter data: ");
-            item=sc.nextInt();
-            dl.insertNode(item);
-        }
-        System.out.println("1.Insert start\n2.Insert End\n3.Insert Pos\n7.display\n8.Exit");
-        do
-        {
-            System.out.print("Enter Option: ");
-            int opt=sc.nextInt();
-
-            switch(opt)
+        try (Scanner sc = new Scanner(System.in)) {
+            System.out.println("Enter Number of nodes: ");
+            int num=sc.nextInt();
+            int item;
+            for(int i=0;i<num;i++)
             {
-                case 1:
-                    System.out.print("Enter data: ");
-                    item=sc.nextInt();
-                    dl.insertStart(item);
-                    break;
-                case 2:
-                    System.out.print("Enter data: ");
-                    item=sc.nextInt();
-                    dl.insertEnd(item);
-                    break;
-                case 3:
-                    System.out.print("Enter data and location: ");
-                    item=sc.nextInt();
-                    int loc=sc.nextInt();
-                    dl.insertPos(item, loc);
-                    break;
-                case 7:
-                    dl.display();break;
-                default:
-                    System.exit(0);
+                System.out.print("Enter data: ");
+                item=sc.nextInt();
+                dl.insertNode(item);
             }
+            System.out.println("1.Insert start\n2.Insert End\n3.Insert Pos\n7.display\n8.Exit");
+            do
+            {
+                System.out.print("Enter Option: ");
+                int opt=sc.nextInt();
+
+                switch(opt)
+                {
+                    case 1:
+                        System.out.print("Enter data: ");
+                        item=sc.nextInt();
+                        dl.insertStart(item);
+                        break;
+                    case 2:
+                        System.out.print("Enter data: ");
+                        item=sc.nextInt();
+                        dl.insertEnd(item);
+                        break;
+                    case 3:
+                        System.out.print("Enter data and location: ");
+                        item=sc.nextInt();
+                        int loc=sc.nextInt();
+                        dl.insertPos(item, loc);
+                        break;
+                    case 7:
+                        dl.display();break;
+                    default:
+                        System.exit(0);
+                }
+            }
+            while(true);
         }
-        while(true);
     }
 }

@@ -72,28 +72,29 @@ class BinSearch{
 public class QuickSortnBinSearch {
     public static void main(String[] args) {
         int[] array=new int[5];
-        Scanner sc=new Scanner(System.in);
-        for (int i=0;i<5;i++)
-        {
-            int e=sc.nextInt();
-            array[i]=e;
-        }
-        Qsort qs=new Qsort();
-        qs.QuickSort(array, 0, 4);
-        for (int i=0;i<5;i++)
-        {
-            System.out.print(array[i]+"   ");
-        }
-        System.out.print("Enter key to search: ");
-        int key=sc.nextInt();
-        BinSearch bs=new BinSearch(0,4);
-        int res=bs.binSearch(array,key,0,(array.length-1));
-        if(res!=-1)
-        {
-            System.out.println("Element found at index "+res);
-        }
-        else{
-            System.out.println("Element not found");
+        try (Scanner sc = new Scanner(System.in)) {
+            for (int i=0;i<5;i++)
+            {
+                int e=sc.nextInt();
+                array[i]=e;
+            }
+            Qsort qs=new Qsort();
+            qs.QuickSort(array, 0, 4);
+            for (int i=0;i<5;i++)
+            {
+                System.out.print(array[i]+"   ");
+            }
+            System.out.print("Enter key to search: ");
+            int key=sc.nextInt();
+            BinSearch bs=new BinSearch(0,4);
+            int res=bs.binSearch(array,key,0,(array.length-1));
+            if(res!=-1)
+            {
+                System.out.println("Element found at index "+res);
+            }
+            else{
+                System.out.println("Element not found");
+            }
         }
     }
 }

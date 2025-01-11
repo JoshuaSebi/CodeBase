@@ -1,4 +1,3 @@
-import java.util.*;
 
 class DefExc extends Exception{
     DefExc (String S)

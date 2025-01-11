@@ -23,20 +23,21 @@ class threadread extends Thread
     }
     public void run()
     {
-        Scanner sc=new Scanner(System.in);
-        while(!s.equalsIgnoreCase("stop"))
-        {
-            System.out.println("Enter String: ");
-            s=sc.nextLine();
-            p.addString(s);
-            try
-        {
-            Thread.sleep(5000);
-        }
-        catch(Exception e)
-        {
-            System.out.println(e);
-        }
+        try (Scanner sc = new Scanner(System.in)) {
+            while(!s.equalsIgnoreCase("stop"))
+            {
+                System.out.println("Enter String: ");
+                s=sc.nextLine();
+                p.addString(s);
+                try
+            {
+                Thread.sleep(5000);
+            }
+            catch(Exception e)
+            {
+                System.out.println(e);
+            }
+            }
         }
         
     }

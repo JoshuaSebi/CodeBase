@@ -5,17 +5,18 @@ public class FileHandling {
     public static void main(String[] args) throws IOException{
         ArrayList<String> str=new ArrayList<>();
         System.out.println("Enter Strings");
-        Scanner sc=new Scanner(System.in);
-        do{ 
-            str.add(sc.nextLine());
-            System.out.println("Continue: enter 0 to break ");
-            char ch=sc.nextLine().charAt(0);
-            if(ch=='0')
-            {
-                break;
+        try (Scanner sc = new Scanner(System.in)) {
+            do{ 
+                str.add(sc.nextLine());
+                System.out.println("Continue: enter 0 to break ");
+                char ch=sc.nextLine().charAt(0);
+                if(ch=='0')
+                {
+                    break;
+                }
             }
+            while(true);
         }
-        while(true);
         //adding to file---------------------
         try {
             FileWriter fr=new FileWriter("file1.txt");
