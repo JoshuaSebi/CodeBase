@@ -1,4 +1,4 @@
-import keyboard
+import keyboard # type: ignore
 import time
 
 names = ["A","B","C","D","E","F"]
