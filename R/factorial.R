@@ -7,5 +7,7 @@ fact<-function(n){
   }
 }
 
+# Main program
+cat('Factorial of a number using recursion\n')
 num<-as.numeric(readline('Enter a number: '))
 cat('Factorial=',fact(num))
