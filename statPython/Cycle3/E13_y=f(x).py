@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-x=np.linspace(-10,10,100)
-y=x**3
+x= np.linspace(-10,10,5)
+y=np.sin(x)
 
-plt.plot(x,y,color="red")
-plt.title("GRAPH")
+plt.plot(x,y)
+plt.title("y = f(x)")
 plt.grid()
 plt.show()

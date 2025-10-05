@@ -1,55 +1,54 @@
+//TCP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <netdb.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
-#define PORT 3025
-#define BUFFER_SIZE 256
 #define LOCALHOST inet_addr("127.0.0.1")
+#define PORT 4000
+#define BUFFER_SIZE 256
 
-void main(){
+int main(){
 
-    //define variables
     int sock;
-    struct sockaddr_in client_addr;
+    int c;
+    struct sockaddr_in addr;
     char buffer[BUFFER_SIZE];
 
-    //error check
-    void error_check(int s, char msg[]){
-        if (s<0){
+    void errorcheck(int x, char msg[]){
+        if (x<0){
             perror("Failed");
             exit(0);
         }
         else{
-            printf("\n%s\n",msg);
+            printf("\n%s",msg);
         }
     }
 
-    //create socket
     sock = socket(AF_INET, SOCK_DGRAM,0);
-    error_check(sock,"Socket Created");
+    errorcheck(sock, "created socket\n");
 
-    //Bind address
-    client_addr.sin_family=AF_INET;
-    client_addr.sin_port=htons(PORT);
-    client_addr.sin_addr.s_addr=LOCALHOST;
-    socklen_t len1 = sizeof(client_addr);
+    //Bind to socket
+    addr.sin_port=htons(PORT);
+    addr.sin_family=AF_INET;
+    addr.sin_addr.s_addr=LOCALHOST;
+    socklen_t len = sizeof(addr);
 
-    //Operations
+    //Communicate
     int status = -1;
     char msg[] = "Hello from client";
 
-    status = sendto(sock, msg, sizeof(msg), 0, (struct sockaddr *) &client_addr, len1);
-    error_check(status, "Message Sent");
+    status = sendto(sock,msg, sizeof(msg),0,sock,(struct sockaddr *) &addr, len);
+    errorcheck(status, "message sent to server\n");
+    status = recvfrom(sock, buffer, sizeof(buffer),0,sock,(struct sockaddr *) &addr, &len);
+    errorcheck(status, "message received from server\n");   
+    printf("%s\n", buffer);
 
-    status = recvfrom(sock,buffer,BUFFER_SIZE,0,(struct sockaddr *) &client_addr, &len1);
-    error_check(status, "Reply Received");
-    printf("Server: %s\n", buffer);
-
-    //close
     close(sock);
+    return 0;
 }

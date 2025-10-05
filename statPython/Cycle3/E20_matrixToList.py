@@ -10,3 +10,5 @@ list1=np.array(list1).reshape(rows,cols)
 
 flat=list1.flatten().tolist()
 print(flat)
+
+

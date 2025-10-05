@@ -8,5 +8,3 @@ mat=np.array([
 
 inv=np.linalg.inv(mat)
 print(inv)
-
-

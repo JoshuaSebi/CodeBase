@@ -3,8 +3,7 @@ import inspect
 
 arr=np.arange(27).reshape(3,3,3)
 print(arr)
-print("_____________________\n")
 
-diag=arr.diagonal(axis1=-2,axis2=0)
+diag=np.diagonal(arr,axis1=-1,axis2=-2)
 print(diag)
 

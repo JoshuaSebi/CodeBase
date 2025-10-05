@@ -2,19 +2,19 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <netdb.h>
 
-#define PORT 3025
+#define PORT 4000
 #define BUFFER_SIZE 256
 #define LOCALHOST inet_addr("127.0.0.1")
 
 void main(){
 
     //define variables
-    int sock;
+    int sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     char buffer[BUFFER_SIZE];
 
@@ -30,30 +30,34 @@ void main(){
     }
     
     //create socket
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     error_check(sock,"Socket Created");
 
-
-    //Bind address server
+    //bind address server
     server_addr.sin_family=AF_INET;
     server_addr.sin_port=htons(PORT);
     server_addr.sin_addr.s_addr=LOCALHOST;
-
-    socklen_t len = sizeof(server_addr);
-    int b = bind(sock, (struct sockaddr *) &server_addr, len);
+    int b = bind(sock, (struct sockaddr *) &server_addr, sizeof(server_addr));
     error_check(b, "Binding Done");
 
+    //listen
+    int l = listen(sock, 5);
+    error_check(l, "Listening");
+
     //accept
-    socklen_t clen = sizeof(client_addr);
+    socklen_t len = sizeof(client_addr);
+    client_addr.sin_family=AF_INET;
+    int a = accept(sock, (struct sockaddr *) &client_addr, &len);
+    error_check(a, "Accepted");
+
+    //Operations
     char reply [] = "Hello from server";
     int status = -1;
-    status = recvfrom(sock, buffer, BUFFER_SIZE, 0, (struct sockaddr *) &client_addr, &clen);
+    status = recv(a, buffer, BUFFER_SIZE, 0);
     error_check(status, "Reply Received");
     printf("Client: %s\n", buffer);
-    status = sendto(sock, reply, sizeof(reply), 0, (struct sockaddr *) &client_addr, clen);
-    error_check(status, "Message Sent");
-
-    //close
+    status = send(a, reply, sizeof(reply), 0);
+    error_check(status, "Reply Sent");  
     close(sock);
+    close(a);
 }
-

@@ -1,8 +1,7 @@
 import numpy as np
 
-a=np.array([4,5,6])
+a=np.array(list(map(int,input().split())))
+b=np.array([7,8,9,19,30])
 
-b=np.array([7,8,9])
-
-print("Kron Pdt\n",np.kron(a,b))
-
+krone=np.kron(a,b)
+print(krone)

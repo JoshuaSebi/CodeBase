@@ -24,7 +24,7 @@ def parenthesis(string):
         return False
 
 
-p="{[([])]}"
+p="{[([])]"
 b=parenthesis(p)
 if b:
     print("Yes")

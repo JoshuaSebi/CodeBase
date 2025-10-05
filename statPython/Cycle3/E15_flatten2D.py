@@ -1,4 +1,5 @@
 import numpy as np
+import inspect
 
 arr=np.array([
     [11,12,13],
@@ -9,3 +10,4 @@ print("__________\n")
 
 flat=arr.flatten()
 print(flat)
+
