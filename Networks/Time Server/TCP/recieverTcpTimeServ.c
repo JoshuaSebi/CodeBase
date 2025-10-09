@@ -28,32 +28,41 @@ void main(){
     char buffer[BUFFER_SIZE];
 
     //create socket
-    sock=socket(AF_INET, SOCK_DGRAM, 0);
+    sock=socket(AF_INET, SOCK_STREAM, 0);
     error_check(sock, "Socket created");
 
-    //bind the server address
+    //bind socket
     serveraddr.sin_family=AF_INET;
     serveraddr.sin_port=htons(PORT);
     serveraddr.sin_addr.s_addr=LOCALHOST;
     int b= bind(sock, (struct sockaddr*) & serveraddr, sizeof(serveraddr));
-    error_check(b, "Binding done");
-    
-    //operations
+    error_check(b, "Binding done");     
+
+    //listen
+    int l=listen(sock, 5);
+    error_check(l, "Listening.....");
+
+    //accept connection
     socklen_t clen= sizeof(clientaddr);
+    int newsock=accept(sock, ( struct sockaddr*)&clientaddr, &clen);
+    error_check(newsock, "Connection accepted");
+
+    //operations
     while(1){
         int status=-1;
-        memset(buffer,BUFFER_SIZE,0);
-        char msg[BUFFER_SIZE];
+        time_t t=time(NULL);
+        char *msg = ctime(&t);
 
-        status=recvfrom(sock, buffer, sizeof(buffer)-1, 0, (struct sockaddr*) &clientaddr, &clen);
+        status=recv(newsock, buffer, BUFFER_SIZE, 0);
         error_check(status, "Message received");
         printf("Client: %s\n", buffer);
 
-        printf("Enter a message:");
-        fgets(msg, BUFFER_SIZE, stdin);
-        status=sendto(sock, msg, sizeof(msg), 0, (struct sockaddr*) &clientaddr, clen);
+        status=send(newsock, msg, strlen(msg), 0);
         error_check(status, "Reply sent");
+
+        exit(0);
     }
 
     close(sock);
+    close(newsock);
 }

@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define PORT 4002
+#define PORT 3700
 #define LOCALHOST inet_addr("127.0.0.1")
 #define BUFFER_SIZE 1024
 
@@ -45,27 +45,29 @@ void main(){
     while(1){
         //accept conn
         socklen_t clen=sizeof(clientaddr);
-        int newsock=accept(sock, (struct sockaddr*) &clientaddr, &clen);
+        int newsock=accept(sock, (struct sockaddr*)&clientaddr, &clen);
         error_check(newsock, "Connection Established");
         //=====================================================
-
-        int status=recv(newsock, buffer, BUFFER_SIZE-1,0);
-        printf("File Name: %s",buffer);
+        int status=recv(newsock, buffer, BUFFER_SIZE-1, 0);
+        error_check(status, "Recieved File Name");
         buffer[strcspn(buffer,"\n")]=0;
+        printf("%s\n",buffer);
+
         char msg[BUFFER_SIZE];
-        int fd=open(buffer,O_RDONLY);
-        if(fd<0){
-            printf("Error Opening file");
-            snprintf(msg, sizeof(msg), "FILE ERROR\nPID: %d",getpid());
+        int fd=open(buffer, O_RDONLY);
+        if (fd<0){
+            snprintf(msg,sizeof(msg),"Error finding file\nPID: %d\n",getpid());
             send(newsock, msg, strlen(msg),0);
+            printf("Error");
+            continue;
         } else {
-            snprintf(msg, sizeof(msg), "FILE EXISTS\nPID: %d",getpid());
-            send(newsock, msg, strlen(msg),0);
+            snprintf(msg,sizeof(msg),"file found\nPID: %d\n",getpid());
+            printf("Found");
             int n;
-            while((n=read(fd, buffer,BUFFER_SIZE))>0){
+            while((n=read(fd, buffer, BUFFER_SIZE-1))>0){
                 buffer[n]='\0';
-                send(newsock, buffer, BUFFER_SIZE,0);
-                memset(buffer,0, BUFFER_SIZE);
+                send(newsock, buffer, n, 0);
+                memset(buffer,0,BUFFER_SIZE);
             }
             close(fd);
         }

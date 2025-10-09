@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define PORT 4002
+#define PORT 8080
 #define LOCALHOST inet_addr("127.0.0.1")
 #define BUFFER_SIZE 1024
 
@@ -28,7 +28,7 @@ void main(){
     char buffer[BUFFER_SIZE]; 
 
     //create socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
     error_check(sock, "Socket created successfully");
 
     //bind socket to port
@@ -38,38 +38,31 @@ void main(){
     int b= bind(sock, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
     error_check(b, "Socket binded to port successfully");
 
-    //listen
-    int l=listen(sock, 5);
-    error_check(l, "Listening....");
-
     while(1){
-        //accept conn
+        int fd;
         socklen_t clen=sizeof(clientaddr);
-        int newsock=accept(sock, (struct sockaddr*) &clientaddr, &clen);
-        error_check(newsock, "Connection Established");
-        //=====================================================
 
-        int status=recv(newsock, buffer, BUFFER_SIZE-1,0);
-        printf("File Name: %s",buffer);
+        //recieve filename
+        int s=recvfrom(sock, buffer, BUFFER_SIZE-1, 0, (struct sockaddr*) &clientaddr, &clen);
+        error_check(s, "Filename received");
         buffer[strcspn(buffer,"\n")]=0;
-        char msg[BUFFER_SIZE];
-        int fd=open(buffer,O_RDONLY);
-        if(fd<0){
-            printf("Error Opening file");
-            snprintf(msg, sizeof(msg), "FILE ERROR\nPID: %d",getpid());
-            send(newsock, msg, strlen(msg),0);
+
+        //open file
+        fd=open(buffer, O_RDONLY);
+        if (fd<0){
+            char msg[]="File not found";
+            sendto(sock, msg, strlen(msg), 0, (struct sockaddr*) &clientaddr, clen);
+            printf("File not found\n");
         } else {
-            snprintf(msg, sizeof(msg), "FILE EXISTS\nPID: %d",getpid());
-            send(newsock, msg, strlen(msg),0);
             int n;
-            while((n=read(fd, buffer,BUFFER_SIZE))>0){
+            while((n=read(fd,buffer, BUFFER_SIZE-1))>0){
                 buffer[n]='\0';
-                send(newsock, buffer, BUFFER_SIZE,0);
-                memset(buffer,0, BUFFER_SIZE);
+                sendto(sock, buffer, n, 0, (struct sockaddr*) &clientaddr, clen);
+                memset(buffer, 0, BUFFER_SIZE);
             }
             close(fd);
+            printf("File sent successfully\n");
         }
-        close(newsock);
     }
     close(sock);
 }

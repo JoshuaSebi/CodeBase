@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define PORT 4002
+#define PORT 3700
 #define LOCALHOST inet_addr("127.0.0.1")
 #define BUFFER_SIZE 1024
 
@@ -42,12 +42,13 @@ void main() {
     error_check(c, "Connected to the server");
 
     //perform operations
-    char filename[BUFFER_SIZE];
-    fgets(filename,BUFFER_SIZE,stdin);
+    char msg[BUFFER_SIZE];
 
-    send(sock,filename,strlen(filename),0);
+    printf("Enter File Name: ");
+    fgets(msg, sizeof(msg), stdin);
+    int status=send(sock,msg,strlen(msg),0);
 
-    while(recv(sock, buffer, BUFFER_SIZE,0)>0){
+    while(recv(sock, buffer, BUFFER_SIZE-1,0)>0){
         buffer[BUFFER_SIZE-1]='\0';
         printf("%s\n",buffer);
         memset(buffer,0,BUFFER_SIZE);

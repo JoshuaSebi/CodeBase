@@ -1,8 +1,8 @@
 import numpy as np
 
 print(f"Enter elements")
-arr1=np.array(list(map(int,input().split())))
-arr2=np.array(list(map(int,input().split())))
+arr1=np.array(list(map(int,input().split()))).reshape(2,2)
+arr2=np.array(list(map(int,input().split()))).reshape(2,2)
 
 
 cormat=np.corrcoef(arr1,arr2)

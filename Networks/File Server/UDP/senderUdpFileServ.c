@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define PORT 4002
+#define PORT 8080
 #define LOCALHOST inet_addr("127.0.0.1")
 #define BUFFER_SIZE 1024
 
@@ -28,29 +28,30 @@ void main() {
     char buffer[BUFFER_SIZE]; 
 
     //create socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
     error_check(sock, "Socket created successfully");
 
-    //connect
-    clientaddr.sin_family=AF_INET;
-    clientaddr.sin_port=htons(PORT);
-    clientaddr.sin_addr.s_addr=LOCALHOST;
-    socklen_t clen= sizeof(clientaddr);
+    //client address
+    clientaddr.sin_family = AF_INET;
+    clientaddr.sin_port = htons(PORT);
+    clientaddr.sin_addr.s_addr = LOCALHOST;
+    socklen_t clen = sizeof(clientaddr);
 
-    //connect
-    int c=connect(sock, (struct sockaddr*) &clientaddr, clen);
-    error_check(c, "Connected to the server");
-
-    //perform operations
     char filename[BUFFER_SIZE];
-    fgets(filename,BUFFER_SIZE,stdin);
+    printf("Enter File Name: ");
+    fgets(filename, sizeof(filename), stdin);
 
-    send(sock,filename,strlen(filename),0);
+    //send filename to server
+    int status=sendto(sock, filename, strlen(filename),0, (struct sockaddr*) &clientaddr, clen);
+    error_check(status, "Filename sent");
 
-    while(recv(sock, buffer, BUFFER_SIZE,0)>0){
+    //receive file content from server
+    while(recvfrom(sock, buffer, BUFFER_SIZE-1, 0, (struct sockaddr*) &clientaddr, &clen) > 0){
         buffer[BUFFER_SIZE-1]='\0';
         printf("%s\n",buffer);
-        memset(buffer,0,BUFFER_SIZE);
+        memset(buffer, 0, BUFFER_SIZE);
     }
+
+    //close
     close(sock);
 }

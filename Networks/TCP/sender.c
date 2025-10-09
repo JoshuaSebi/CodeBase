@@ -33,7 +33,7 @@ void main(){
     sock = socket(AF_INET, SOCK_STREAM,0);
     error_check(sock,"Socket Created");
 
-    //Bind address
+
     client_addr.sin_family=AF_INET;
     client_addr.sin_port=htons(PORT);
     client_addr.sin_addr.s_addr=LOCALHOST;

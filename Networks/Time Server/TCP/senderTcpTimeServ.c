@@ -28,7 +28,7 @@ void main(){
     char buffer[BUFFER_SIZE];
 
     //create Socket
-    sock= socket(AF_INET, SOCK_DGRAM,0);
+    sock= socket(AF_INET, SOCK_STREAM,0);
     error_check(sock, "Socket created");
 
     //configure client address
@@ -37,19 +37,24 @@ void main(){
     clientaddr.sin_addr.s_addr=LOCALHOST;
     socklen_t clen=sizeof(clientaddr);
 
+    //connect
+    int conn=connect(sock, (struct sockaddr*)&clientaddr, sizeof(clientaddr));
+    error_check(conn, "Connection established");
+
     //operations
     int status=-1;
     char msg[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
     printf("Enter a message:");
     fgets(msg, BUFFER_SIZE, stdin);
 
-    status=sendto(sock, msg, sizeof(msg), 0, (struct sockaddr*) &clientaddr, clen);
+
+    status=send(sock, msg, strlen(msg), 0);
     error_check(status, "Message sent");
 
-    memset(buffer, BUFFER_SIZE, 0);
-    status= recvfrom(sock, msg, sizeof(msg)-1, 0, (struct sockaddr*) &clientaddr, &clen);
+    status= recv(sock, buffer, BUFFER_SIZE-1, 0);
     error_check(status, "Reply received");
-    printf("Server: %s\n", msg);
+    printf("Server: %s\n", buffer);
 
     //close
     close(sock);
