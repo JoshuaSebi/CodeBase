@@ -1,56 +1,78 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <string.h>
-#include <fcntl.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <stdbool.h>
 
-#define PORT 4002
-#define LOCALHOST inet_addr("127.0.0.1")
-#define BUFFER_SIZE 1024
+#define PORT 8080
+#define MAX_FRAMES 10
+#define WINDOW_SIZE 4
+#define TIMEOUT 3
 
-void error_check(int s, char msg[]){
-    if(s < 0){
-        perror("Failed");
-        exit(0);
-    } else {
-        printf("%s\n", msg);
+int main() {
+    int sockfd;
+    struct sockaddr_in servaddr;
+    socklen_t len = sizeof(servaddr);
+    char buffer[1024];
+    bool acked[MAX_FRAMES] = {false};
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    struct timeval tv = {TIMEOUT, 0};
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+    printf("Client ready to send frames...\n");
+
+    int base = 0, next = 0;
+    int timers[MAX_FRAMES] = {0};
+
+    while (base < MAX_FRAMES) {
+        // Send frames in window
+        while (next < base + WINDOW_SIZE && next < MAX_FRAMES) {
+            char msg[16];
+            sprintf(msg, "%d", next);
+            sendto(sockfd, msg, strlen(msg) + 1, 0, (struct sockaddr *)&servaddr, len);
+            printf("[CLIENT] Sent Frame %d\n", next);
+            timers[next] = 0;
+            next++;
+        }
+
+        // Wait for ACK
+        memset(buffer, 0, sizeof(buffer));
+        int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&servaddr, &len);
+
+        if (n > 0) {
+            int ack_no = atoi(buffer + 3);
+            printf("[CLIENT] Received %s\n", buffer);
+            acked[ack_no] = true;
+        } else {
+            // Handle timeouts
+            for (int i = base; i < next; i++) {
+                if (!acked[i]) {
+                    timers[i]++;
+                    if (timers[i] >= TIMEOUT) {
+                        char msg[16];
+                        sprintf(msg, "%d", i);
+                        sendto(sockfd, msg, strlen(msg) + 1, 0, (struct sockaddr *)&servaddr, len);
+                        printf("[CLIENT] Timeout! Retransmitting Frame %d\n", i);
+                        timers[i] = 0;
+                    }
+                }
+            }
+        }
+
+        // Slide window
+        while (base < MAX_FRAMES && acked[base])
+            base++;
     }
-}
 
-void main() {
-    //define variables
-    int sock;
-    struct sockaddr_in clientaddr;
-    char buffer[BUFFER_SIZE]; 
+    sendto(sockfd, "END", strlen("END") + 1, 0, (struct sockaddr *)&servaddr, len);
+    printf("All frames sent successfully.\n");
 
-    //create socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    error_check(sock, "Socket created successfully");
-
-    //connect
-    clientaddr.sin_family=AF_INET;
-    clientaddr.sin_port=htons(PORT);
-    clientaddr.sin_addr.s_addr=LOCALHOST;
-    socklen_t clen= sizeof(clientaddr);
-
-    //connect
-    int c=connect(sock, (struct sockaddr*) &clientaddr, clen);
-    error_check(c, "Connected to the server");
-
-    //perform operations
-    char filename[BUFFER_SIZE];
-    fgets(filename,BUFFER_SIZE,stdin);
-
-    send(sock,filename,strlen(filename),0);
-
-    while(recv(sock, buffer, BUFFER_SIZE,0)>0){
-        buffer[BUFFER_SIZE-1]='\0';
-        printf("%s\n",buffer);
-        memset(buffer,0,BUFFER_SIZE);
-    }
-    close(sock);
+    close(sockfd);
+    return 0;
 }

@@ -1,89 +1,66 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/select.h>
 
-#define PORT 8080
-#define MAX_FRAME_SIZE 1024
-#define TIMEOUT_SEC 2
-#define MAX_FRAMES 10
-#define WINDOW_SIZE 3
+
+#define PORT 1243
+#define MAXSIZE 128
+#define LOCALHOST inet_addr("127.0.0.1")
+#define WINSIZE 3
 
 typedef struct {
-    int frame_no;
-    char data[MAX_FRAME_SIZE];
+    int fnum;
+    char data[30];
 } Frame;
 
 typedef struct {
-    int ack_no;
+    int anum;
 } Ack;
 
-void die(const char *msg) {
-    perror(msg);
-    exit(1);
-}
+void main(){
+    Frame f;
+    Ack a;
+    int sock;
+    struct sockaddr_in serveraddr;
+    socklen_t len=sizeof(serveraddr);
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-int main() {
-    int sockfd;
-    struct sockaddr_in servaddr;
-    Frame frames_to_send[MAX_FRAMES + 1];
-    Ack ack;
-    socklen_t len = sizeof(servaddr);
-    fd_set fds;
-    struct timeval tv;
+    // Set socket timeout to 3 seconds
+    struct timeval timeout={3,0};
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-    int base = 1;
-    int next_seq_num = 1;
-    
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        die("socket creation failed");
-    }
+    serveraddr.sin_family=AF_INET;
+    serveraddr.sin_port=htons(PORT);
+    serveraddr.sin_addr.s_addr=LOCALHOST;
 
-    memset(&servaddr, 0, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    int base=1;
+    int nextseqnum=1;
 
-    for (int i = 1; i <= MAX_FRAMES; i++) {
-        frames_to_send[i].frame_no = i;
-        snprintf(frames_to_send[i].data, MAX_FRAME_SIZE, "Frame %d data", i);
-    }
-
-    while (base <= MAX_FRAMES) {
-        while (next_seq_num < base + WINDOW_SIZE && next_seq_num <= MAX_FRAMES) {
-            sendto(sockfd, &frames_to_send[next_seq_num], sizeof(Frame), 0, (const struct sockaddr *)&servaddr, len);
-            printf("Sender: Sent frame %d\n", next_seq_num);
-            next_seq_num++;
+    while (base<=6){
+        //send frames in window
+        while(nextseqnum<=WINSIZE+base-1 && nextseqnum<=6){
+            f.fnum=nextseqnum;
+            sprintf(f.data,"This is Frame %d\n",nextseqnum);
+            sendto(sock, &f, sizeof(f),0,(struct sockaddr*)&serveraddr, sizeof(serveraddr));
+            printf("[Client] Frame %d sent\n",nextseqnum);
+            nextseqnum++;
         }
 
-        FD_ZERO(&fds);
-        FD_SET(sockfd, &fds);
-        tv.tv_sec = TIMEOUT_SEC;
-        tv.tv_usec = 0;
-
-        int ready = select(sockfd + 1, &fds, NULL, NULL, &tv);
-
-        if (ready < 0) {
-            die("select error");
-        } else if (ready == 0) {
-            printf("Sender: >>> Timeout for ACK of frame %d. Going back to resend window. <<<\n", base);
-            next_seq_num = base; 
-        } else {
-            recvfrom(sockfd, &ack, sizeof(ack), 0, (struct sockaddr *)&servaddr, &len);
-            printf("Sender: Received ACK %d\n", ack.ack_no);
-
-            if (ack.ack_no >= base) {
-                base = ack.ack_no + 1;
-                printf("Sender: Window base is now %d\n", base);
-            }
+        //Wait for ack  
+        recvfrom(sock, &a, sizeof(a),0, (struct sockaddr*)&serveraddr, &len);
+        if (a.anum>=base){
+            printf("[Client] ACK %d received\n",a.anum);
+            base=a.anum+1; 
         }
+        else{
+            printf("[Client] ACK not recieved, resesnding frames from %d to %d\n",base,nextseqnum-1);
+            nextseqnum=base;
+        }
+        sleep(1);
     }
-
-    close(sockfd);
-    printf("Sender: All frames sent and acknowledged successfully.\n");
-    return 0;
 }

@@ -1,75 +1,68 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <string.h>
-#include <fcntl.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <stdbool.h>
 
-#define PORT 4002
-#define LOCALHOST inet_addr("127.0.0.1")
-#define BUFFER_SIZE 1024
+#define PORT 8080
+#define MAX_FRAMES 10
+#define LOST_FRAME_NO 3
 
-void error_check(int s, char msg[]){
-    if(s < 0){
-        perror("Failed");
-        exit(0);
-    } else {
-        printf("%s\n", msg);
-    }
-}
+int main() {
+    int sockfd;
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t len = sizeof(cliaddr);
+    char buffer[1024];
+    bool received[MAX_FRAMES] = {false};
+    bool lost_done = false;
 
-void main(){
-    //define variables
-    int sock;
-    struct sockaddr_in clientaddr, serveraddr;
-    char buffer[BUFFER_SIZE]; 
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
 
-    //create socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    error_check(sock, "Socket created successfully");
+    bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+    printf("Server ready. Waiting for frames...\n");
 
-    //bind socket to port
-    serveraddr.sin_family = AF_INET;
-    serveraddr.sin_port = htons(PORT);
-    serveraddr.sin_addr.s_addr = LOCALHOST;
-    int b= bind(sock, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
-    error_check(b, "Socket binded to port successfully");
+    int delivered_upto = 0;
 
-    //listen
-    int l=listen(sock, 5);
-    error_check(l, "Listening....");
+    while (1) {
+        memset(buffer, 0, sizeof(buffer));
+        int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&cliaddr, &len);
+        if (n <= 0)
+            continue;
 
-    while(1){
-        //accept conn
-        socklen_t clen=sizeof(clientaddr);
-        int newsock=accept(sock, (struct sockaddr*) &clientaddr, &clen);
-        error_check(newsock, "Connection Established");
-        //=====================================================
-
-        int status=recv(newsock, buffer, BUFFER_SIZE-1,0);
-        printf("File Name: %s",buffer);
-        buffer[strcspn(buffer,"\n")]=0;
-        char msg[BUFFER_SIZE];
-        int fd=open(buffer,O_RDONLY);
-        if(fd<0){
-            printf("Error Opening file");
-            snprintf(msg, sizeof(msg), "FILE ERROR\nPID: %d",getpid());
-            send(newsock, msg, strlen(msg),0);
-        } else {
-            snprintf(msg, sizeof(msg), "FILE EXISTS\nPID: %d",getpid());
-            send(newsock, msg, strlen(msg),0);
-            int n;
-            while((n=read(fd, buffer,BUFFER_SIZE))>0){
-                buffer[n]='\0';
-                send(newsock, buffer, BUFFER_SIZE,0);
-                memset(buffer,0, BUFFER_SIZE);
-            }
-            close(fd);
+        if (strncmp(buffer, "END", 3) == 0) {
+            printf("Transmission complete.\n");
+            break;
         }
-        close(newsock);
+
+        int frame_no = atoi(buffer);
+        printf("\n[SERVER] Frame %d received\n", frame_no);
+
+        if (!lost_done && frame_no == LOST_FRAME_NO) {
+            printf("   >> Simulating loss of frame %d\n", frame_no);
+            lost_done = true;
+            continue;
+        }
+
+        received[frame_no] = true;
+        printf("   Frame %d stored in buffer\n", frame_no);
+
+        // Send ACK for this frame
+        char ack_msg[16];
+        sprintf(ack_msg, "ACK%d", frame_no);
+        sendto(sockfd, ack_msg, strlen(ack_msg) + 1, 0, (struct sockaddr *)&cliaddr, len);
+        printf("   Sent %s\n", ack_msg);
+
+        // Deliver frames in order
+        while (delivered_upto < MAX_FRAMES && received[delivered_upto]) {
+            printf("   Delivered frame %d to application\n", delivered_upto);
+            delivered_upto++;
+        }
     }
-    close(sock);
+
+    close(sockfd);
+    return 0;
 }

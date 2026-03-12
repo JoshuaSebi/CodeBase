@@ -1,87 +1,59 @@
 #include <stdio.h>
+#include <unistd.h> 
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define PORT 8080
-#define MAX_FRAME_SIZE 1024
-#define MAX_FRAMES 6
+#define PORT 1243
+#define MAXSIZE 128
+#define LOCALHOST inet_addr("127.0.0.1")
 
 typedef struct {
     int frame_no;
-    char data[MAX_FRAME_SIZE];
+    char data[30];
 } Frame;
 
 typedef struct {
     int ack_no;
 } Ack;
 
-void die(const char *msg) {
-    perror(msg);
-    exit(1);
-}
-
-int main() {
+void main(){
+    Frame f;
+    Ack a;
     int sockfd;
-    struct sockaddr_in servaddr, cliaddr;
-    Frame frame;
-    Ack ack;
-    socklen_t len = sizeof(cliaddr);
-    int expected_frame = 1;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t len = sizeof(client_addr);
+    sockfd = socket(AF_INET, SOCK_DGRAM,0);
 
-    // Track dropped frames 3 and 5
-    int dropped3 = 0, dropped5 = 0;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr=LOCALHOST;
+    bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        die("socket creation failed");
-    }
+    printf("[Server] Server is running and waiting for frames...\n");
 
-    memset(&servaddr, 0, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = INADDR_ANY;
-    servaddr.sin_port = htons(PORT);
+    int seq=1;
+    int dropped3=0;
+    while(seq<=6){
+        //recieve frame
+        recvfrom(sockfd, &f, (sizeof(f)), 0, (struct sockaddr*)&client_addr, &len);
+        printf("[Server] Frame %d received\n",f.frame_no);
 
-    if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-        die("bind failed");
-    }
-    
-    printf("Receiver is ready and waiting...\n");
-
-    while (expected_frame <= MAX_FRAMES) {
-        recvfrom(sockfd, &frame, sizeof(frame), 0, (struct sockaddr *)&cliaddr, &len);
-        printf("Receiver: Got frame #%d, data='%s'\n", frame.frame_no, frame.data);
-
-        // Drop frame 3 once
-        if (frame.frame_no == 3 && !dropped3) {
-            printf("Receiver: Intentionally dropping ACK for frame 3\n");
-            dropped3 = 1;
+        //simulate frame drop for frame 3
+        if(f.frame_no==3 && dropped3==0){
+            printf("[Server] Frame 3 dropped\n");
+            dropped3=1;
             continue;
         }
 
-        // Drop frame 5 once
-        if (frame.frame_no == 5 && !dropped5) {
-            printf("Receiver: Intentionally dropping ACK for frame 5\n");
-            dropped5 = 1;
-            continue;
-        }
-
-        if (frame.frame_no == expected_frame) {
-            printf("Receiver: Delivered data: %s\n", frame.data);
-            expected_frame++;
-        } else {
-            printf("Receiver: Out of order frame %d (expected %d), ignoring\n",
-                   frame.frame_no, expected_frame);
-        }
-
-        ack.ack_no = frame.frame_no;
-        sendto(sockfd, &ack, sizeof(ack), 0, (const struct sockaddr *)&cliaddr, len);
-        printf("Receiver: Sent ACK for frame %d\n", frame.frame_no);
+        //send ack
+        a.ack_no=f.frame_no;
+        sendto(sockfd, &a, sizeof(a), 0, (struct sockaddr*)&client_addr, len);
+        printf("[Server] ACK %d sent\n",a.ack_no);
+        seq++; 
     }
-
     close(sockfd);
-    printf("Receiver: All frames received successfully\n");
-    return 0;
 }
