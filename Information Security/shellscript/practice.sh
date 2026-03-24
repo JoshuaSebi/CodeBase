@@ -13,5 +13,5 @@ do
 		fi
 		echo "$count | $(basename "$file") | $credate"
 		((count++))
-		fi	
+	fi	
 done
