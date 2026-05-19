@@ -1,43 +1,37 @@
 import numpy as np
 
-def key_gen(size):
+def keygen(size):
+    key=[]
+    for i in range (size):
+        val=list(map(int, input(f"Enter {size} elements: ").split()))
+        key.append(val)
+    return np.array(key)
+    
+def textgen(text,size):
+    tm=[]
+    while(len(text)%size!=0):
+        text+="X"
 
-    mat=[]
-    for i in range(size):
-        row=list(map(int, input(f"Enter {size} elts: ").split()))
-        mat.append(row)
+    for x in text:
+        val=(ord(x)-ord('A'))%26
+        tm.append(val)
 
-    return np.array(mat)
+    return tm
 
-def text_gen(text,size):
-    text = text.replace(" ","").upper()
+def encrypt(text,key,size):
+    rest=""
+    pt=textgen(text,size)
+    for i in range(0,len(pt),size):
+        block=pt[i:i+size]
+        blck=np.array(block).reshape(size,1)
 
-    while (len(text)%size!=0):
-        text+='X'
-    text_val=[]
-    for i in text:
-        text_val.append(ord(i)-ord("A"))
+        resmat=np.dot(key,blck)%26
+        for j in range(size):
+            val=(resmat[j][0]+ord('A'))
+            rest+=chr(val)
+    return rest 
 
-    return text_val
-
-
-def encrypt(text,size):
-    ct=""
-    key=key_gen(size)
-    text_val=text_gen(text,size)
-
-    for i in range(0,len(text_val),size):
-        pair=text_val[i:i+size]
-        pair=np.array(pair).reshape(size,1)
-
-        resmat=np.dot(key,pair)%26
-
-        for j in range(0, size):
-            ct+=chr(resmat[j][0]+ord('A'))
-
-    return ct
-
-
-text=input("Enter : ").upper()
-size=int(input("Size: "))
-print(encrypt(text,size))
+pt=input("Enter Text: ").upper()
+key=keygen(3)
+ct=encrypt(pt,key,3)
+print("Encrypted: ",ct)

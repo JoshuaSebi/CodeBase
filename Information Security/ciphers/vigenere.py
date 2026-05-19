@@ -1,22 +1,22 @@
-def encrypt(text,key):
-    result=""
-    j=0
+def encrypt(txt,key):
     kl=len(key)
-    for x in text:
-        shift=((ord(x)-ord("A"))+(ord(key[j%kl])-ord("A")))%26
-        result+=chr(shift + ord("A"))
-        j+=1
-    return result
+    restxt=""
+    k=0
+    for x in txt:
+        shift=((ord(x)-ord('A'))+(ord(key[k])-ord("A")))%26
+        restxt+=chr(shift+ord("A"))
+        k=(k+1)%kl
+    return restxt
 
-def decrypt(text,key):
-    result=""
-    j=0
+def decrypt(restxt,key):
     kl=len(key)
-    for x in text:
-        shift=((ord(x)-ord("A"))-(ord(key[j%kl])-ord("A")))%26
-        result+=chr(shift + ord("A"))  
-        j+=1      
-    return result
+    txt=""
+    k=0
+    for x in restxt:
+        shift=((ord(x)-ord('A'))-(ord(key[k])-ord("A")))%26
+        txt+=chr(shift+ord("A"))
+        k=(k+1)%kl
+    return txt
 
 txt=input("Enter the text: ").upper()
 key="KEY".upper()

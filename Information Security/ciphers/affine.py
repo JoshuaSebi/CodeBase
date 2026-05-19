@@ -1,27 +1,28 @@
-def encrypt(text,a,b):
-    result=""
-    for x in text:
-       shift=(a*(ord(x)-ord("A"))+b)%26
-       result+=chr(shift + ord("A"))
-    return result
-
-def decrypt(text,a,b):
-    result=""
-    a_inv=pow(a,-1,26)
-
+def inverse(x):
     for i in range(26):
-        if(a*i)%26==1:
-            a_inv=i
-            break
+        if (x*i)%26==1:
+            return i
 
-    for x in text:
-        shift=a_inv*((ord(x)-ord("A"))-b)%26
-        result+=chr(shift + ord("A"))
-    return result
+def enc_affine(pt,a,b):
+    ct=""
+    for x in pt:
+        shift=(a*(ord(x)-ord('A'))+b)%26
+        ct+=chr(shift+ord("A"))
+    return ct
 
-txt=input("Enter the text: ").upper()
-# a=int(input("Enter A: "))
-# b=int(input("Enter B: "))
-restxt=encrypt(txt,5,8)
-print(restxt)
-print(decrypt(restxt,5,8))
+    
+def dec_affine(ct,a,b):
+    pt=""
+    a_inv=inverse(a)
+    for x in ct:
+        shift=(a_inv*((ord(x)-ord('A'))-b))%26
+        pt+=chr(shift+ord('A'))
+    return pt
+
+
+pt=input("Enter PlainText: ").upper()
+a=int(input("Enter a: "))
+b=int(input("Enter b: "))
+ct=enc_affine(pt,a,b)
+print("CipherText: ",ct)
+print("PlainText: ",dec_affine(ct,a,b))

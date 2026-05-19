@@ -37,7 +37,8 @@ def encrypt(text, key):
         for j in range(size):
             cipher+=chr(result[j][0]+ord('A'))
     return cipher
-
+  
+  
 
 
 pt=input("Enter pt: ")
